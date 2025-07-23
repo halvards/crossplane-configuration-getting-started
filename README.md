@@ -1,4 +1,5 @@
-# configuration-getting-started
+# crossplane-configuration-getting-started
+
 An introductory example to Crossplane and Compositions using provider-nop. This will enable provisioning of several different fake resource types.
 
 This repository contains a reference configuration for [Crossplane](https://crossplane.io). This configuration is built with [provider-nop](https://marketplace.upbound.io/providers/crossplane-contrib/provider-nop), a Crossplane provider that simulates the creation of external resources.
@@ -27,19 +28,45 @@ Docs](https://docs.crossplane.io/latest/concepts/compositions/).
 
 ### Prerequisites
 
-Before we can install the reference platform we should install the `up` CLI.
-This is a utility that makes following this quickstart guide easier. Everything
-described here can also be done in a declarative approach - which we highly
-recommend for any production type use-case.
-<!-- TODO enhance this guide: Getting ready for Gitops -->
+This guide deployes to a local Kubernetes cluster using [`kind`](https://kind.sigs.k8s.io/).
 
-To install `up` run this install script:
+To run a `kind` cluster, you must install either Docker Desktop or Podman.
+
+### Install tools
+
+Install the required CLI tools:
+
 ```console
-curl -sL https://cli.upbound.io | sh
+brew install crossplane helm kind kubernetes-cli
 ```
-See [up docs](https://docs.upbound.io/cli/) for more install options.
 
-We need a running Crossplane control plane to install our instance. Use [Upbound](https://console.upbound.io) to create a managed control plane. You can [create an account](https://accounts.upbound.io/register) and start a free 30 day trial if you haven't signed up for Upbound before.
+You can optionally also install `k9s` for a terminal-based dashboard.
+
+### Create a Kubernetes cluster
+
+Use [`kind`](https://kind.sigs.k8s.io/) to create a local Kubernetes cluster:
+
+```console
+kind create cluster --name crossplane-getting-started
+```
+
+### Install the Crossplane controller
+
+Use Helm:
+
+```console
+helm repo add crossplane-stable https://charts.crossplane.io/stable
+helm repo update
+helm install crossplane crossplane-stable/crossplane \
+  --namespace crossplane-system \
+  --create-namespace \
+  --version 1.20.0
+
+kubectl rollout status --namespace crossplane-system deployment/crossplane
+kubectl rollout status --namespace crossplane-system deployment/crossplane-rbac-manager
+```
+
+Reference: [Install Crossplane](https://docs.crossplane.io/latest/software/install/)
 
 ### Install the Getting Started configuration
 
@@ -48,10 +75,14 @@ configuration package](https://docs.crossplane.io/latest/concepts/packages/)
 so there is a single command to install it:
 
 ```console
-up ctp configuration install xpkg.upbound.io/upbound/configuration-getting-started:v0.1.0
+crossplane xpkg install configuration xpkg.upbound.io/upbound/configuration-getting-started:v0.3.0
+sleep 5
+kubectl wait --for condition=Healthy provider.pkg.crossplane.io/crossplane-contrib-provider-nop
+kubectl wait --for condition=Healthy configuration.pkg.crossplane.io/upbound-configuration-getting-started
 ```
 
-Validate the install by inspecting the provider and configuration packages:
+Validate the installation by inspecting the provider and configuration packages:
+
 ```console
 kubectl get providers,providerrevision
 
@@ -60,53 +91,83 @@ kubectl get configurations,configurationrevisions
 
 Check the
 [marketplace](https://marketplace.upbound.io/configurations/upbound/configuration-getting-started/)
-for the latest version of this platform.
+for the latest version of this configuration package.
 
-## Using the Getting Started configuration
+## Create composite resources using claims
 
-🎉 Congratulations. You have just installed your first Crossplane-powered platform!
+You can now use the managed control plane to request resources which will simulate getting
+provisioned in an external cloud service. You do this by creating
+[claims](https://docs.crossplane.io/latest/concepts/claims/) against the APIs available on your
+control plane. In our example here we simply create the claims directly.
 
-You can now use the managed control plane to request resources which will simulate getting provisioned in an external cloud service. You do this by creating "claims" against the APIs available on yuor control palne. In our example here we simply create the claims directly:
+Create a namespace to hold our claims:
+
+```console
+kubectl create namespace my-resources
+```
 
 Create a custom defined cluster:
+
 ```console
-kubectl apply -f examples/XCluster/claim.yaml
+kubectl apply --filename examples/XCluster/claim.yaml --namespace my-resources
+
+kubectl wait --for condition=Ready cluster.platform.acme.co/cluster1 --namespace my-resources
+```
+
+View the resource hierarchy created from the cluster claim:
+
+```console
+crossplane beta trace cluster.platform.acme.co/cluster1 --namespace my-resources
 ```
 
 Create a custom defined database:
-```console
-kubectl apply -f examples/XDatabase/claim.yaml
-```
-
-You can verify the status by inspecting the claims, composites and managed
-resources:
 
 ```console
-kubectl get claim,composite,managed
+kubectl apply --filename examples/XDatabase/claim.yaml --namespace my-resources
+
+kubectl wait --for condition=Ready database.platform.acme.co/database1 --namespace my-resources
 ```
 
-To delete the provisioned resources you would simply delete the claims:
+View the resource hierarchy created from the database claim:
 
 ```console
-kubectl delete -f examples/XCluster/claim.yaml,examples/XDatabase/claim.yaml
+crossplane beta trace database.platform.acme.co/database1 --namespace my-resources
 ```
 
-To uninstall the provider & platform configuration:
+List the claims in the namespace we created:
 
 ```console
-kubectl delete configurations.pkg.crossplane.io configuration-getting-started
+kubectl get claim,composite,managed --namespace my-resources
 ```
 
-## Next Steps
+List the composite resources and managed resources in the cluster:
 
-We recommend you check out of one of Upbound's platform reference architectures to learn how to use Crossplane to provision real external resources, such as in a Cloud Serice Provider's environment. Have a look:
+```console
+kubectl get composite,managed
+```
 
-* [AWS reference platform](https://github.com/upbound/platform-ref-aws/)
-* [Azure reference platform](https://github.com/upbound/platform-ref-azure/)
-* [GCP reference platform](https://github.com/upbound/platform-ref-gcp/)
+Explore additional resources in the [`examples`](./examples/) directory.
 
-## Questions?
+## Delete resources
 
-For any questions, thoughts and comments don't hesitate to [reach
-out](https://www.upbound.io/contact) or drop by
-[slack.crossplane.io](https://slack.crossplane.io), and say hi!
+To delete the provisioned resources, delete the claims:
+
+```console
+kubectl delete cluster.platform.acme.co/cluster1 --namespace my-resources
+
+kubectl delete database.platform.acme.co/database1 --namespace my-resources
+```
+
+## Clean up
+
+To uninstall the provider platform configuration, but keep the `kind` cluster:
+
+```console
+kubectl delete configurations.pkg.crossplane.io upbound-configuration-getting-started
+```
+
+Delete the `kind` Kubernetes cluster:
+
+```console
+kind delete cluster --name crossplane-getting-started
+```
