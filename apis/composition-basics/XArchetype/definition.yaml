@@ -1,0 +1,85 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xarchetypes.platform.acme.co
+spec:
+  group: platform.acme.co
+  names:
+    kind: XArchetype
+    plural: xarchetypes
+  claimNames:
+    kind: Archetype
+    plural: archetypes
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: |
+                The specification for how this archetype should be
+                deployed.
+              properties:
+                parameters:
+                  type: object
+                  description: |
+                    The parameters indicating how this archetype should
+                    be configured.
+                  properties:
+                    name:
+                      type: string
+                      description: |
+                        The name of the archetype configuration.
+                    clusters:
+                      type: array
+                      description: |
+                        List of clusters that should be included in this archetype.
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: |
+                              The name of the cluster.
+                          type:
+                            type: string
+                            enum: ["atlaskube", "autobahn"]
+                            description: |
+                              The type of cluster (AtlasKube or Autobahn).
+                          initialNodeCount:
+                            type: number
+                            description: |
+                              The number of nodes for this cluster.
+                          project:
+                            type: string
+                            description: |
+                              The cloud project this cluster should be created in.
+                          location:
+                            type: string
+                            description: |
+                              The geographic region this cluster should be deployed.
+                          networkRef:
+                            type: object
+                            description: |
+                              A reference to the network associated with this cluster.
+                            properties:
+                              name:
+                                type: string
+                                description: |
+                                  The name of the network associated with this cluster.
+                        required:
+                          - name
+                          - type
+                          - project
+                          - location
+                          - networkRef
+                      minItems: 1
+                  required:
+                    - name
+                    - clusters
+              required:
+                - parameters 

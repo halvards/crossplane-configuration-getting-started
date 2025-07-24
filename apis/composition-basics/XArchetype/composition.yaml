@@ -1,0 +1,48 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xarchetypes.platform.acme.co
+spec:
+  compositeTypeRef:
+    apiVersion: platform.acme.co/v1alpha1
+    kind: XArchetype
+  mode: Pipeline
+  pipeline:
+    - step: compose
+      functionRef:
+        name: crossplane-contrib-function-kcl
+      input:
+        apiVersion: krm.kcl.dev/v1alpha1
+        kind: KCLRun
+        metadata:
+          name: compose-archetype
+        spec:
+          target: Resources
+          params:
+            name: "input-instance"
+          source: |
+            oxr = option("params").oxr
+            dxr = {
+                **oxr
+                status.dummy = "cool-status"
+            }
+            
+            # Create XCluster resources for each cluster in the archetype
+            items = [
+                {
+                    apiVersion: "platform.acme.co/v1alpha1"
+                    kind: "XCluster"
+                    metadata.name = "${oxr.metadata.name}-${cluster.name}"
+                    spec.parameters = {
+                        initialNodeCount: cluster.initialNodeCount or 1
+                        project: cluster.project
+                        location: cluster.location
+                        networkRef: cluster.networkRef
+                        subnetworkRef: cluster.subnetworkRef or {"name": "default-subnetwork"}
+                    }
+                } for cluster in oxr.spec.parameters.clusters or []
+            ]
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: crossplane-contrib-function-auto-ready 

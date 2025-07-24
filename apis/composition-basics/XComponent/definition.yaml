@@ -1,0 +1,55 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcomponents.platform.acme.co
+spec:
+  group: platform.acme.co
+  names:
+    kind: XComponent
+    plural: xcomponents
+  claimNames:
+    kind: Component
+    plural: components
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: |
+                The specification for how this component should be
+                deployed.
+              properties:
+                parameters:
+                  type: object
+                  description: |
+                    The parameters indicating how this component should
+                    be configured.
+                  properties:
+                    name:
+                      type: string
+                      description: |
+                        The name of the component (e.g., argocd, dns).
+                    type:
+                      type: string
+                      enum: ["argocd", "dns"]
+                      description: |
+                        The type of component to deploy.
+                    version:
+                      type: string
+                      description: |
+                        The version of the component to deploy.
+                    configuration:
+                      type: object
+                      description: |
+                        Component-specific configuration parameters.
+                      additionalProperties: true
+                  required:
+                    - name
+                    - type
+              required:
+                - parameters 

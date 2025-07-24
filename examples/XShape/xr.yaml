@@ -1,0 +1,22 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: XShape
+metadata:
+  name: shape1
+  annotations:
+    render.crossplane.io/composition-path: apis/composition-basics/XShape/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
+spec:
+  parameters:
+    name: "minimal-shape"
+    components:
+      - name: "argocd"
+        type: "argocd"
+        version: "v2.8.0"
+        configuration:
+          server:
+            replicas: 1
+      - name: "coredns"
+        type: "dns"
+        version: "v1.10.0"
+        configuration:
+          replicas: 1 

@@ -1,0 +1,20 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: XComponent
+metadata:
+  name: component1
+  annotations:
+    render.crossplane.io/composition-path: apis/composition-basics/XComponent/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
+spec:
+  parameters:
+    name: "argocd-component"
+    type: "argocd"
+    version: "v2.8.0"
+    configuration:
+      server:
+        replicas: 2
+        insecure: true
+      repoServer:
+        replicas: 1
+      notifications:
+        enabled: true 

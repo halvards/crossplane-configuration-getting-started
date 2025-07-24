@@ -1,0 +1,25 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: XArchetype
+metadata:
+  name: archetype1
+  annotations:
+    render.crossplane.io/composition-path: apis/composition-basics/XArchetype/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
+spec:
+  parameters:
+    name: "standard-archetype"
+    clusters:
+      - name: "atlaskube-primary"
+        type: "atlaskube"
+        initialNodeCount: 3
+        project: "main-project"
+        location: "us-central1"
+        networkRef:
+          name: "main-network"
+      - name: "autobahn-secondary"
+        type: "autobahn"
+        initialNodeCount: 2
+        project: "main-project"
+        location: "us-east1"
+        networkRef:
+          name: "main-network" 

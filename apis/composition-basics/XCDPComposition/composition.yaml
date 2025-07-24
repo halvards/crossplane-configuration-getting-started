@@ -1,0 +1,46 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcdpcompositions.platform.acme.co
+spec:
+  compositeTypeRef:
+    apiVersion: platform.acme.co/v1alpha1
+    kind: XCDPComposition
+  mode: Pipeline
+  pipeline:
+    - step: compose
+      functionRef:
+        name: crossplane-contrib-function-kcl
+      input:
+        apiVersion: krm.kcl.dev/v1alpha1
+        kind: KCLRun
+        metadata:
+          name: compose-cdp
+        spec:
+          target: Resources
+          params:
+            name: "input-instance"
+          source: |
+            oxr = option("params").oxr
+            dxr = {
+                **oxr
+                status.dummy = "cool-status"
+            }
+            
+            # Create XFleet resource
+            fleet_resource = {
+                apiVersion: "platform.acme.co/v1alpha1"
+                kind: "XFleet"
+                metadata.name = "${oxr.metadata.name}-f"
+                spec.parameters = {
+                    name: oxr.spec.parameters.fleet.name
+                    shape: oxr.spec.parameters.fleet.shape
+                    archetype: oxr.spec.parameters.fleet.archetype
+                }
+            }
+
+            items = [fleet_resource]
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: crossplane-contrib-function-auto-ready 

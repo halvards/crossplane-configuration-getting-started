@@ -1,0 +1,22 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: Archetype
+metadata:
+  name: archetype1
+spec:
+  parameters:
+    name: "standard-archetype"
+    clusters:
+      - name: "atlaskube-primary"
+        type: "atlaskube"
+        initialNodeCount: 3
+        project: "main-project"
+        location: "us-central1"
+        networkRef:
+          name: "main-network"
+      - name: "autobahn-secondary"
+        type: "autobahn"
+        initialNodeCount: 2
+        project: "main-project"
+        location: "us-east1"
+        networkRef:
+          name: "main-network" 

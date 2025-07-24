@@ -1,0 +1,9 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: Database
+metadata:
+  name: database2
+spec:
+  parameters:
+    region: "west"
+    size: "small"
+    storage: 10

@@ -33,7 +33,20 @@ spec:
                   project: "acme-project"
                   location: oxr.spec.parameters.location
                 }
-              }, {
+              },
+              {
+                apiVersion: "platform.acme.co/v1alpha1"
+                kind: "XCluster"
+                metadata.name = "{}-cluster".format(oxr.metadata.name)
+                spec.parameters = {
+                  initialNodeCount: oxr.spec.parameters.nodeCount
+                  networkRef.name: "{}-net".format(oxr.metadata.name)
+                  subnetworkRef.name: "{}-subnet".format(oxr.metadata.name)
+                  project: "acme-project"
+                  location: oxr.spec.parameters.location
+                }
+              },
+              {
                 apiVersion: "platform.acme.co/v1alpha1"
                 kind: "XServiceAccount"
                 metadata.name = "{}-sa".format(oxr.metadata.name)

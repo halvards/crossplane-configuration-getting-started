@@ -1,0 +1,47 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xshapes.platform.acme.co
+spec:
+  compositeTypeRef:
+    apiVersion: platform.acme.co/v1alpha1
+    kind: XShape
+  mode: Pipeline
+  pipeline:
+    - step: compose
+      functionRef:
+        name: crossplane-contrib-function-kcl
+      input:
+        apiVersion: krm.kcl.dev/v1alpha1
+        kind: KCLRun
+        metadata:
+          name: compose-shape
+        spec:
+          target: Resources
+          params:
+            name: "input-instance"
+          source: |
+            oxr = option("params").oxr
+            dxr = {
+                **oxr
+                status.dummy = "cool-status"
+            }
+            
+            # Create XComponent resources for each component in the shape
+            items = [
+                {
+                    apiVersion: "platform.acme.co/v1alpha1"
+                    kind: "XComponent"
+                    metadata.name = "${oxr.metadata.name}-c-${component.name}"
+                    spec.parameters = {
+                        name: component.name
+                        type: component.type
+                        version: component.version or "latest"
+                        configuration: component.configuration or {}
+                    }
+                } for component in oxr.spec.parameters.components or []
+            ]
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: crossplane-contrib-function-auto-ready 

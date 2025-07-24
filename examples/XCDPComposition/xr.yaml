@@ -1,0 +1,43 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: XCDPComposition
+metadata:
+  name: xcdp-composition1
+  annotations:
+    render.crossplane.io/composition-path: apis/composition-basics/XCDPComposition/composition.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
+spec:
+  parameters:
+    name: "development-cdp"
+    fleet:
+      name: "development-fleet"
+      shape:
+        name: "dev-shape"
+        components:
+          - name: "argocd"
+            type: "argocd"
+            version: "v2.7.0"
+            configuration:
+              server:
+                replicas: 1
+          - name: "coredns"
+            type: "dns"
+            version: "v1.9.3"
+            configuration:
+              replicas: 1
+      archetype:
+        name: "dev-cluster-archetype"
+        clusters:
+          - name: "atlaskube-dev"
+            type: "atlaskube"
+            initialNodeCount: 1
+            project: "dev-project"
+            location: "us-west1"
+            networkRef:
+              name: "dev-network"
+          - name: "autobahn-dev"
+            type: "autobahn"
+            initialNodeCount: 1
+            project: "dev-project"
+            location: "us-west2"
+            networkRef:
+              name: "dev-network" 

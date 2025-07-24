@@ -1,0 +1,39 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: CDPComposition
+metadata:
+  name: cdp-composition1
+spec:
+  parameters:
+    name: "production-cdp"
+    fleet:
+      name: "production-fleet"
+      shape:
+        name: "core-shape"
+        components:
+          - name: "argocd"
+            type: "argocd"
+            version: "v2.6.2"
+            configuration:
+              replicas: 2
+          - name: "coredns"
+            type: "dns"
+            version: "v1.11.4"
+            configuration:
+              replicas: 2
+      archetype:
+        name: "multi-cluster-archetype"
+        clusters:
+          - name: "atlaskube-cluster"
+            type: "atlaskube"
+            initialNodeCount: 3
+            project: "production-project"
+            location: "us-central1"
+            networkRef:
+              name: "production-network"
+          - name: "autobahn-cluster"
+            type: "autobahn"
+            initialNodeCount: 3
+            project: "production-project"
+            location: "us-east1"
+            networkRef:
+              name: "production-network" 

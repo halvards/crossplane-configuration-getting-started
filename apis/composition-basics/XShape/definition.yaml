@@ -1,0 +1,70 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xshapes.platform.acme.co
+spec:
+  group: platform.acme.co
+  names:
+    kind: XShape
+    plural: xshapes
+  claimNames:
+    kind: Shape
+    plural: shapes
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: |
+                The specification for how this shape should be
+                deployed.
+              properties:
+                parameters:
+                  type: object
+                  description: |
+                    The parameters indicating how this shape should
+                    be configured.
+                  properties:
+                    name:
+                      type: string
+                      description: |
+                        The name of the shape configuration.
+                    components:
+                      type: array
+                      description: |
+                        List of components that should be included in this shape.
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: |
+                              The name of the component.
+                          type:
+                            type: string
+                            enum: ["argocd", "dns"]
+                            description: |
+                              The type of component.
+                          version:
+                            type: string
+                            description: |
+                              The version of the component.
+                          configuration:
+                            type: object
+                            description: |
+                              Component-specific configuration.
+                            additionalProperties: true
+                        required:
+                          - name
+                          - type
+                      minItems: 1
+                  required:
+                    - name
+                    - components
+              required:
+                - parameters 

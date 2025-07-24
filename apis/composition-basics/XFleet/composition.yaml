@@ -1,0 +1,56 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xfleets.platform.acme.co
+spec:
+  compositeTypeRef:
+    apiVersion: platform.acme.co/v1alpha1
+    kind: XFleet
+  mode: Pipeline
+  pipeline:
+    - step: compose
+      functionRef:
+        name: crossplane-contrib-function-kcl
+      input:
+        apiVersion: krm.kcl.dev/v1alpha1
+        kind: KCLRun
+        metadata:
+          name: compose-fleet
+        spec:
+          target: Resources
+          params:
+            name: "input-instance"
+          source: |
+            oxr = option("params").oxr
+            dxr = {
+                **oxr
+                status.dummy = "cool-status"
+            }
+            
+            # Create XShape resource
+            shape_resource = {
+                apiVersion: "platform.acme.co/v1alpha1"
+                kind: "XShape"
+                metadata.name = "${oxr.metadata.name}-s"
+                spec.parameters = {
+                    name: oxr.spec.parameters.shape.name
+                    components: oxr.spec.parameters.shape.components
+                }
+            }
+            
+            # Create XArchetype resource
+            archetype_resource = {
+                apiVersion: "platform.acme.co/v1alpha1"
+                kind: "XArchetype"
+                metadata.name = "${oxr.metadata.name}-a"
+                spec.parameters = {
+                    name: oxr.spec.parameters.archetype.name
+                    clusters: oxr.spec.parameters.archetype.clusters
+                }
+            }
+
+            items = [shape_resource, archetype_resource]
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: crossplane-contrib-function-auto-ready 

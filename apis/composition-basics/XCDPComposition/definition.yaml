@@ -1,0 +1,151 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcdpcompositions.platform.acme.co
+spec:
+  group: platform.acme.co
+  names:
+    kind: XCDPComposition
+    plural: xcdpcompositions
+  claimNames:
+    kind: CDPComposition
+    plural: cdpcompositions
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: |
+                The specification for how this CDP composition should be
+                deployed.
+              properties:
+                parameters:
+                  type: object
+                  description: |
+                    The parameters indicating how this CDP composition should
+                    be configured.
+                  properties:
+                    name:
+                      type: string
+                      description: |
+                        The name of the CDP composition.
+                    fleet:
+                      type: object
+                      description: |
+                        The fleet configuration for this CDP composition.
+                      properties:
+                        name:
+                          type: string
+                          description: |
+                            The name of the fleet.
+                        shape:
+                          type: object
+                          description: |
+                            The shape configuration containing components.
+                          properties:
+                            name:
+                              type: string
+                              description: |
+                                The name of the shape.
+                            components:
+                              type: array
+                              description: |
+                                List of components in the shape.
+                              items:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                    description: |
+                                      The name of the component.
+                                  type:
+                                    type: string
+                                    enum: ["argocd", "dns", "prometheus"]
+                                    description: |
+                                      The type of component.
+                                  version:
+                                    type: string
+                                    description: |
+                                      The version of the component.
+                                  configuration:
+                                    type: object
+                                    description: |
+                                      Component-specific configuration.
+                                    additionalProperties: true
+                                required:
+                                  - name
+                                  - type
+                              minItems: 1
+                          required:
+                            - name
+                            - components
+                        archetype:
+                          type: object
+                          description: |
+                            The archetype configuration containing clusters.
+                          properties:
+                            name:
+                              type: string
+                              description: |
+                                The name of the archetype.
+                            clusters:
+                              type: array
+                              description: |
+                                List of clusters in the archetype.
+                              items:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                    description: |
+                                      The name of the cluster.
+                                  type:
+                                    type: string
+                                    enum: ["atlaskube", "autobahn", "homa", "titan"]
+                                    description: |
+                                      The type of cluster.
+                                  initialNodeCount:
+                                    type: number
+                                    description: |
+                                      The number of nodes for this cluster.
+                                  project:
+                                    type: string
+                                    description: |
+                                      The cloud project this cluster should be created in.
+                                  location:
+                                    type: string
+                                    description: |
+                                      The geographic region this cluster should be deployed.
+                                  networkRef:
+                                    type: object
+                                    description: |
+                                      A reference to the network associated with this cluster.
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: |
+                                          The name of the network associated with this cluster.
+                                required:
+                                  - name
+                                  - type
+                                  - project
+                                  - location
+                                  - networkRef
+                              minItems: 1
+                          required:
+                            - name
+                            - clusters
+                      required:
+                        - name
+                        - shape
+                        - archetype
+                  required:
+                    - name
+                    - fleet
+              required:
+                - parameters 

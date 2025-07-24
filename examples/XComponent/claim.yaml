@@ -1,0 +1,11 @@
+apiVersion: platform.acme.co/v1alpha1
+kind: Component
+metadata:
+  name: component1
+spec:
+  parameters:
+    name: "argocd-component"
+    type: "argocd"
+    version: "v2.8.0"
+    configuration:
+      replicas: 2
